@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桌面宠物 · 麦麦</title>
+<style>
+:root{
+  --body1:#FFD95A;
+  --body2:#FFC72C;
+  --body3:#F8A100;
+  --cheek:#FF8FA3;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(160deg,#FFF8E1,#FFE0B2 55%,#FFCCBC);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;user-select:none;-webkit-user-select:none;
+}
+.title{position:absolute;top:24px;font-size:15px;color:#a1887f;letter-spacing:2px;}
+.scene{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;}
+.pet{
+  position:relative;width:180px;height:180px;
+  background:radial-gradient(circle at 38% 30%,var(--body1),var(--body2) 55%,var(--body3));
+  border-radius:50% 50% 46% 46%/55% 55% 45% 45%;
+  box-shadow:0 20px 45px rgba(248,161,0,.35),inset -14px -16px 28px rgba(200,120,0,.22),inset 10px 12px 20px rgba(255,255,255,.4);
+  cursor:pointer;animation:breathe 3.4s ease-in-out infinite;
+  transition:transform .15s;
+}
+.pet.happy{animation:hop .5s ease;}
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-10px) scale(1.03);}}
+@keyframes hop{0%{transform:translateY(0) scale(1);}30%{transform:translateY(-26px) scale(1.08,.92);}60%{transform:translateY(0) scale(.95,1.05);}100%{transform:translateY(0) scale(1);}}
+.eye{position:absolute;top:62px;width:36px;height:44px;background:#3a2410;border-radius:50%;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.3);transition:transform .1s;}
+.eye.l{left:40px;}
+.eye.r{right:40px;}
+.eye.blink{transform:scaleY(.1);}
+.pupil{position:absolute;width:15px;height:17px;background:#fff;border-radius:50%;top:13px;left:10px;transition:transform .07s linear;}
+.eye::before{content:"";position:absolute;top:7px;left:9px;width:7px;height:7px;background:rgba(255,255,255,.85);border-radius:50%;z-index:2;}
+.cheek{position:absolute;top:104px;width:26px;height:16px;background:var(--cheek);border-radius:50%;opacity:.7;filter:blur(.5px);}
+.cheek.l{left:30px;}
+.cheek.r{right:30px;}
+.mouth{position:absolute;top:108px;left:50%;transform:translateX(-50%);width:40px;height:20px;border:3px solid #3a2410;border-top:none;border-radius:0 0 40px 40px;transition:.2s;}
+.mouth.open{height:26px;background:rgba(255,120,120,.35);}
+.bubble{
+  position:absolute;top:-54px;left:50%;transform:translateX(-50%);
+  background:#fff;padding:8px 14px;border-radius:18px;font-size:14px;color:#5d4037;
+  box-shadow:0 6px 16px rgba(0,0,0,.12);white-space:nowrap;opacity:0;transition:opacity .3s,transform .3s;
+  pointer-events:none;
+}
+.bubble.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+.bubble::after{content:"";position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#fff;}
+.shadow{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:120px;height:22px;background:rgba(0,0,0,.12);border-radius:50%;filter:blur(4px);animation:shadow 3.4s ease-in-out infinite;}
+@keyframes shadow{0%,100%{transform:translateX(-50%) scale(1);opacity:.4;}50%{transform:translateX(-50%) scale(.85);opacity:.25;}}
+.hearts{position:absolute;inset:0;pointer-events:none;}
+.heart{position:absolute;font-size:22px;animation:float 1.2s ease-out forwards;}
+@keyframes float{0%{opacity:1;transform:translateY(0) scale(.6);}100%{opacity:0;transform:translateY(-90px) scale(1.2);}}
+.panel{
+  width:min(420px,90vw);background:rgba(255,255,255,.7);backdrop-filter:blur(10px);
+  border-radius:22px;padding:18px 20px;margin-bottom:30px;box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+.stat{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px;color:#6d4c41;}
+.stat .label{width:42px;flex-shrink:0;}
+.bar{flex:1;height:12px;background:#ffe0b2;border-radius:8px;overflow:hidden;}
+.bar > i{display:block;height:100%;border-radius:8px;transition:width .4s;}
+.bar.hunger > i{background:linear-gradient(90deg,#FFB300,#FF7043);}
+.bar.mood > i{background:linear-gradient(90deg,#FF8A65,#EC407A);}
+.bar.energy > i{background:linear-gradient(90deg,#4FC3F7,#29B6F6);}
+.btns{display:flex;gap:10px;margin-top:14px;}
+.btns button{
+  flex:1;border:none;padding:10px 0;border-radius:14px;font-size:15px;cursor:pointer;
+  background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.08);transition:transform .1s,background .2s;color:#5d4037;
+}
+.btns button:active{transform:scale(.93);}
+.btns button:hover{background:#FFF3E0;}
+</style>
+</head>
+<body>
+<div class="title">🍟 桌面宠物 · 麦麦</div>
+<div class="scene">
+  <div class="pet" id="pet">
+    <div class="bubble" id="bubble"></div>
+    <div class="eye l"><div class="pupil" id="pL"></div></div>
+    <div class="eye r"><div class="pupil" id="pR"></div></div>
+    <div class="cheek l"></div><div class="cheek r"></div>
+    <div class="mouth" id="mouth"></div>
+    <div class="shadow"></div>
+    <div class="hearts" id="hearts"></div>
+  </div>
+</div>
+<div class="panel">
+  <div class="stat"><span class="label">饱食</span><div class="bar hunger"><i id="bHunger"></i></div></div>
+  <div class="stat"><span class="label">心情</span><div class="bar mood"><i id="bMood"></i></div></div>
+  <div class="stat"><span class="label">精力</span><div class="bar energy"><i id="bEnergy"></i></div></div>
+  <div class="btns">
+    <button id="feed">🍔 喂食</button>
+    <button id="petBtn">🤚 摸摸</button>
+    <button id="sleep">💤 睡觉</button>
+  </div>
+</div>
+<script>
+const pet=document.getElementById('pet');
+const pL=document.getElementById('pL'),pR=document.getElementById('pR');
+const bubble=document.getElementById('bubble');
+const mouth=document.getElementById('mouth');
+const hearts=document.getElementById('hearts');
+const bHunger=document.getElementById('bHunger');
+const bMood=document.getElementById('bMood');
+const bEnergy=document.getElementById('bEnergy');
+let stats={hunger:80,mood:75,energy:90};
+let sayTimer=null;
+
+function updateBars(){
+  bHunger.style.width=stats.hunger+'%';
+  bMood.style.width=stats.mood+'%';
+  bEnergy.style.width=stats.energy+'%';
+}
+function say(t){
+  bubble.textContent=t;bubble.classList.add('show');
+  clearTimeout(sayTimer);
+  sayTimer=setTimeout(()=>bubble.classList.remove('show'),1800);
+}
+function blink(){
+  document.querySelectorAll('.eye').forEach(e=>e.classList.add('blink'));
+  setTimeout(()=>document.querySelectorAll('.eye').forEach(e=>e.classList.remove('blink')),140);
+}
+setInterval(()=>{if(Math.random()>.4)blink();},2600);
+
+document.addEventListener('mousemove',e=>{
+  const r=pet.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const ang=Math.atan2(e.clientY-cy,e.clientX-cx);
+  const m=7;
+  const x=Math.cos(ang)*m, y=Math.sin(ang)*m*0.8;
+  pL.style.transform=`translate(${x}px,${y}px)`;
+  pR.style.transform=`translate(${x}px,${y}px)`;
+});
+
+function hop(){pet.classList.remove('happy');void pet.offsetWidth;pet.classList.add('happy');}
+function spawnHearts(n=5){
+  for(let i=0;i<n;i++){
+    const h=document.createElement('div');
+    h.className='heart';h.textContent=Math.random()>.5?'❤️':'💛';
+    h.style.left=(40+Math.random()*100)+'px';
+    h.style.top=(40+Math.random()*40)+'px';
+    h.style.animationDelay=(i*0.08)+'s';
+    hearts.appendChild(h);
+    setTimeout(()=>h.remove(),1400);
+  }
+}
+
+pet.addEventListener('click',()=>{
+  hop();spawnHearts();say('嘻嘻~好开心');
+  stats.mood=Math.min(100,stats.mood+6);
+  stats.hunger=Math.max(0,stats.hunger-1);
+  updateBars();
+});
+
+document.getElementById('feed').addEventListener('click',()=>{
+  mouth.classList.add('open');setTimeout(()=>mouth.classList.remove('open'),500);
+  hop();say('呜姆…好吃！');
+  stats.hunger=Math.min(100,stats.hunger+22);
+  stats.mood=Math.min(100,stats.mood+8);
+  updateBars();
+});
+document.getElementById('petBtn').addEventListener('click',()=>{
+  spawnHearts(3);say('好舒服呀~');
+  stats.mood=Math.min(100,stats.mood+12);
+  updateBars();
+});
+document.getElementById('sleep').addEventListener('click',()=>{
+  say('Zzz… 睡一会儿');
+  stats.energy=Math.min(100,stats.energy+30);
+  updateBars();
+});
+
+setInterval(()=>{
+  stats.hunger=Math.max(0,stats.hunger-2);
+  stats.energy=Math.max(0,stats.energy-1);
+  if(stats.hunger<35) stats.mood=Math.max(0,stats.mood-2);
+  updateBars();
+  if(stats.hunger<15) say('肚子饿饿了…');
+  else if(stats.energy<15) say('困困…要睡觉');
+},3000);
+
+updateBars();
+</script>
+</body>
+</html>

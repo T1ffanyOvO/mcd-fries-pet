@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+.DS_Store
+
+# 本地运行时产物 / 敏感信息（绝不可入库）
+.mcd-pet/
+.env
+*.token
+mcp.json

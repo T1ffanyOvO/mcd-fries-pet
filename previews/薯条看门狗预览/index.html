@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>薯条挂件 · 看门狗 + 主动提示 设计预览</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: #fff8ef; color: #2a2a2a; line-height: 1.6; padding: 28px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { color: #C8102E; font-size: 24px; margin-bottom: 6px; }
+  .sub { color: #8a6d2f; margin-bottom: 22px; font-size: 14px; }
+  .card { background: #fff; border: 1px solid #ffe1a8; border-radius: 14px;
+          padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(200,16,46,.05); }
+  .card h2 { color: #C8102E; font-size: 17px; margin-bottom: 12px; display:flex; align-items:center; gap:8px;}
+  .tag { display:inline-block; background:#FFC72C; color:#5a3d00; font-size:12px;
+         padding:2px 8px; border-radius:999px; font-weight:600; }
+  /* 架构图 */
+  .flow { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin: 6px 0 14px; }
+  .node { background:#fff; border:2px solid #C8102E; color:#C8102E; font-weight:600;
+          padding:8px 12px; border-radius:10px; font-size:13px; }
+  .node.gray { border-color:#bbb; color:#777; }
+  .node.yellow { background:#FFC72C; border-color:#FFC72C; color:#5a3d00; }
+  .arrow { color:#C8102E; font-size:18px; }
+  .loop { color:#777; font-size:13px; margin-top:6px;}
+  /* 场景 */
+  .scn { border-left:4px solid #FFC72C; background:#fffdf6; padding:12px 14px;
+         border-radius:0 10px 10px 0; margin-bottom:12px; }
+  .scn b { color:#C8102E; }
+  .chat { background:#f1f1f3; border-radius:12px; padding:10px 12px; margin-top:8px;
+          font-size:13px; color:#333; }
+  .on { color:#1aa260; font-weight:600; }
+  .off { color:#C8102E; font-weight:600; }
+  pre { background:#1e1e2e; color:#e6e6e6; padding:14px 16px; border-radius:10px;
+        overflow:auto; font-size:12px; line-height:1.5; margin-top:8px; }
+  .cmd { background:#2a2a2a; color:#ffe1a8; padding:10px 12px; border-radius:8px;
+         font-family: ui-monospace, Menlo, monospace; font-size:13px; margin-top:8px; }
+  .note { font-size:13px; color:#666; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍟 薯条挂件 · 看门狗 + 主动提示 设计预览</h1>
+  <div class="sub">解决「薯条进程是唯一显示通道 → 一挂就静默失败」的问题。两层保活，你基本无感。</div>
+
+  <div class="card">
+    <h2>📐 它长什么样（架构）</h2>
+    <div class="flow">
+      <span class="node">你 / 助手</span>
+      <span class="arrow">→</span>
+      <span class="node yellow">push_bubble</span>
+      <span class="arrow">→</span>
+      <span class="node">写队列文件</span>
+      <span class="arrow">→</span>
+      <span class="node">薯条进程（显示气泡）</span>
+    </div>
+    <div class="flow">
+      <span class="node gray">launchd 开机自启</span>
+      <span class="arrow">↘</span>
+      <span class="node gray">看门狗 watchdog</span>
+      <span class="arrow">↺ 每 5s 探活</span>
+    </div>
+    <div class="loop">看门狗盯着薯条进程：没在跑 → 5 秒内自动 <code>open</code> 拉起。Mac 重启后由 launchd 保活，整条链不断。</div>
+  </div>
+
+  <div class="card">
+    <h2>🛡️ 两层保活</h2>
+    <p><span class="tag">层 1</span> <b>看门狗自动自愈</b>：后台常驻，每 5 秒 <code>pgrep</code> 薯条；挂了就自动拉起 → 你最多空白几秒，基本无感。</p>
+    <p style="margin-top:8px"><span class="tag">层 2</span> <b>主动提示（兜底）</b>：万一连看门狗都没激活，我每次推气泡前先查「薯条在跑吗」；没跑就直接告诉你，而不是假装气泡已显示。</p>
+  </div>
+
+  <div class="card">
+    <h2>👀 你会看到 / 听到什么</h2>
+
+    <div class="scn">
+      <b>场景 1 · 正常</b><br>
+      薯条常驻桌角，气泡照常弹出。<br>
+      <div class="chat">状态文件 ~/.mcd-pet/watchdog.json → {"alive": true, "restarts": 0}</div>
+    </div>
+
+    <div class="scn">
+      <b>场景 2 · 薯条崩了 / Mac 重启</b><br>
+      看门狗 5 秒内检测到 → 自动 <code>open</code> 拉起 → 你无感。<br>
+      <div class="chat"><span class="on">🔔 通知</span> 「🍟 薯条已自动重启」（可选，macOS 通知中心弹出）</div>
+    </div>
+
+    <div class="scn">
+      <b>场景 3 · 看门狗也没起（你还没激活 launchd）</b><br>
+      我推气泡前查到薯条没跑，直接说：<br>
+      <div class="chat"><span class="off">⚠️ 助手</span> 「薯条没在跑，跟我说『启动薯条』我立刻拉起它。」（而不是假装已显示）</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ 真·看门狗脚本（约 40 行，已写好待激活）</h2>
+    <pre># watchdog.py —— 每5s探活，挂了自动 open 拉起
+import os, time, json, subprocess
+APP = "/Users/nina/Applications/麦薯条挂件.app"
+MARKER = "麦薯条-tk.py"
+STATUS = os.path.expanduser("~/.mcd-pet/watchdog.json")
+
+def pet_running():
+    r = subprocess.run(["pgrep","-f",MARKER], capture_output=True, text=True)
+    return bool(r.stdout.strip())
+
+def start_pet():
+    subprocess.run(["open", APP], check=False)
+
+def main():
+    restarts = 0
+    while True:
+        if not pet_running():
+            restarts += 1
+            start_pet()
+            subprocess.run(["osascript","-e",
+              'display notification "🍟 薯条已自动重启" with title "麦当劳薯条挂件"'])
+        time.sleep(5)
+main()</pre>
+    <div class="note">开机自启靠 launchd：<code>com.mcd.pet.watchdog.plist</code>（KeepAlive + RunAtLoad）也已写好，归系统管，不受 WorkBuddy 开关影响。</div>
+  </div>
+
+  <div class="card">
+    <h2>🖱️ 你需要做的一件事（一次性）</h2>
+    <p>看门狗要「开机自启」，需在<b>你自己的终端</b>跑一句（WorkBuddy 沙箱没权限动 launchd）：</p>
+    <div class="cmd">launchctl load -w ~/Library/LaunchAgents/com.mcd.pet.watchdog.plist</div>
+    <div class="note">只此一次。之后 Mac 重启、薯条崩了，都由看门狗自动兜住。</div>
+  </div>
+
+  <div class="card" style="border-color:#C8102E">
+    <h2>▶️ 要不要做？</h2>
+    <p>说一声「<b>做</b>」，我就：写入 <code>watchdog.py</code> + <code>plist</code>（已就绪），并现场演示「杀掉薯条 → 看门狗 5 秒内自动拉起」给你看。激活开机自启那一句由你在本机终端执行即可。</p>
+  </div>
+</div>
+</body>
+</html>
