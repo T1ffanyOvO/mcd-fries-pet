@@ -190,11 +190,11 @@ class Pet(QWidget):
             self.last_ts = ts
             self.bounce_v = -12
             self._bubble(text)
-            # 推荐含 ≥2 份麦麦 → 触发分身合奏（与气泡绑定，点麦麦才消失）
+            # 推荐含 ≥2 份薯条 → 触发分身合奏（与气泡绑定，点麦麦才消失）
             # 优先读结构化字段 fries；未提供时回退到数文字（兼容手动推送）
             fries = data.get("fries")
             if fries is None:
-                fries = text.count("麦麦")
+                fries = text.count("薯条")
             if fries >= 2:
                 self.play_ensemble()
             else:

@@ -11,7 +11,7 @@
 - 🍟 **分身合奏**：推荐中有 ≥2 份薯条时，桌宠左右各探出一只小麦麦并持续摇摆；点击桌宠会一并收起。
 - 🛡️ **看门狗脚本**：提供故障探测与重启脚本（`scripts/watchdog.py`，每 5s 探活、挂了自动拉起）。开机启动与保活由 `install/` 下的安装脚本自动生成并注册 launchd 任务（`com.mcd.pet` 本体 + `com.mcd.pet.watchdog` 看门狗）。
 - 🥧 **多形态**：PySide6 浮空桌宠（Python）、macOS 原生悬浮挂件（Swift）、网页版虚拟宠物（HTML）。
-- 🎟️ **新券可领提醒**：`coupon_alert.py` 直连 mcd-mcp 定时巡检麦麦省，一旦发现券状态跳变成「可领取」，就推气泡 + macOS 通知。**只提醒，不自动领券**（自动领券属于真实消费行为，必须人工确认）。
+- 🎟️ **新券可领提醒**：`coupon_alert.py` 直连 mcd-mcp 定时巡检麦麦省，一旦发现券状态跳变成「可领取」，就推气泡 + macOS 通知。**只提醒，不自动领券**（领券是把券加入你的麦麦省账户，属账户状态变更而非下单消费，仍须人工确认）。
 
 ## 🧩 架构
 
@@ -102,6 +102,7 @@ mcd-fries-pet/
 ├── CONTEST_DECLARATION.md        # 参赛声明（内容不可改）
 ├── MCP_INTEGRATION.md            # 麦当劳 MCP 真实调用说明
 ├── mcp-config.example.json       # 脱敏配置示例（仅占位符）
+├── workbuddy.md                  # WorkBuddy 开发对话记录（参赛专项材料）
 ├── skills/
 │   └── mcd-order-advisor/        # 真正调用 mcd-mcp 的 skill
 │       ├── SKILL.md

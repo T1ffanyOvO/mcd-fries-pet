@@ -1,51 +1,61 @@
 # MCP 集成说明（MCP_INTEGRATION.md）
 
-本项目**真实使用**麦当劳官方 MCP（`mcd-mcp`）能力，把实时菜单 / 营养 / 门店 / 优惠数据，通过桌面宠物「麦麦」用气泡播报出来。
+本项目使用麦当劳中国官方 MCP（`mcd-mcp`）提供菜单、营养、门店和优惠券数据。项目有两条 MCP 数据路径：WorkBuddy 对话中的点餐推荐，以及由 launchd 定时运行的优惠券提醒。桌宠「麦麦」只负责显示消息，不直接连接 MCP。
 
-## 一、使用的麦当劳 MCP
+## 一、Server 与鉴权
 
-- **Server**：`mcd-mcp`（远程托管，Streamable HTTP）
-- **端点**：`https://mcp.mcd.cn`
-- **接入方式**：在 WorkBuddy 连接器配置中填入 Token（见 `mcp-config.example.json`），由 WorkBuddy 加载 MCP 工具后调用。
-- **鉴权要点（作者环境实测）**：当前配置示例包含 `Authorization` 与 `authToken` 两个请求头。鉴权行为可能变化，请以官方 MCP 指南和实际响应为准；发生 401/403 时检查 Token 和连接器配置。
+- **Server**：`mcd-mcp`，远程托管，使用 Streamable HTTP。
+- **端点**：`https://mcp.mcd.cn`。
+- **WorkBuddy 对话路径**：在 WorkBuddy 的 MCP 连接器中配置 Token，由 WorkBuddy 加载并调用 MCP Tools。脱敏配置见 `mcp-config.example.json`。
+- **优惠券提醒路径**：`skills/mcd-order-advisor/scripts/coupon_alert.py` 直接向 MCP 端点发送 `tools/call` 请求，不依赖 WorkBuddy 对话进程；脚本从本机 `~/.workbuddy/mcp.json` 读取 Token。该文件只在用户本机，不应提交到仓库。
+- 作者环境的配置同时带 `Authorization: Bearer <TOKEN>` 和 `authToken: <TOKEN>` 请求头。鉴权行为可能变化；遇到 401/403 时，应检查 Token、配置和官方指南。
 
-## 二、实际调用的 Tool 与用途
+## 二、使用的 MCP Tools
 
-| Tool | 入参 | 用途 |
+| Tool | 入参 | 使用场景 |
 |---|---|---|
-| `now-time-info` | 无 | 判断早餐 / 正餐时段，避免用晚餐菜单推荐早晨 |
-| `list-nutrition-foods` | 无 | 拉取约 160 个餐品的营养表（能量/蛋白/脂肪/碳水/钠），是算热量的主力工具 |
-| `query-meals` | `beType`（1 到店 / 2 外送 / 5 得来速 / 6 团餐），外送/得来速/团餐需门店编码 | 获取在售菜单、分类、餐品编码、标签 |
-| `query-nearby-stores` | 到店场景 | 获取附近可自取门店 |
-| `query-store-coupons` / `available-coupons` | — | 查询门店 / 可用优惠，做省钱推荐 |
-| `campaign-calendar` | — | 查询当前活动，做活动推荐 |
-| `query-meal-detail` | 餐品编码 | 查套餐明细（套餐热量非单品简单相加，需查明细） |
+| `now-time-info` | 无 | 对话推荐时判断早餐或正餐时段 |
+| `list-nutrition-foods` | 无 | 获取餐品营养数据，用于热量和营养参考 |
+| `query-meals` | `beType`；部分用餐方式还需门店编码 | 查询对应场景的在售菜单 |
+| `query-nearby-stores` | 按 Tool schema 提供位置条件 | 查询附近门店 |
+| `query-meal-detail` | 餐品编码 | 查询套餐组成和选项 |
+| `query-store-coupons` | 按 Tool schema 提供门店信息 | 查询当前门店适用的优惠券 |
+| `available-coupons` | 无 | 查询当前麦麦省优惠券及其领取状态；对话推荐和定时提醒均会使用 |
+| `campaign-calendar` | 按 Tool schema 提供日期条件 | 查询活动日历 |
 
-> 涉及真钱 / 真积分的工具（`create-order`、`draw-lottery`、`auto-bind-coupons`、`mall-create-order`）本项目**仅在有明确用户确认时**才调用，且调用前复述门店 / 餐品 / 总价 / 优惠。
+`coupon_alert.py` 只调用 `available-coupons` 查询状态，不调用 `auto-bind-coupons`。后者会把当前可领券加入用户账户；只有用户明确要求并确认后，才可执行。下单、抽奖、积分兑换等会改变订单或账户状态的操作也必须先取得用户确认。
 
-## 三、调用流程（端到端）
+## 三、WorkBuddy 对话推荐流程
 
-1. 用户在 WorkBuddy 对话中发起需求（如「麦当劳吃什么」「帮我配一顿 600 大卡」「这个套餐多少卡」）。
-2. `mcd-order-advisor` skill 先调 `now-time-info` 判断时段，再调 `list-nutrition-foods` 与 `query-meals` 等拉取**实时**菜单与营养数据。
-3. skill 按热量目标 / 预算 / 忌口生成 2–3 套方案，并给出卡路里与营养账。
-4. 结论被压成菜品与热量分行显示的短文案，并通过 `push_bubble.py` 附带 `--fries N` 结构化薯条份数；脚本把文案、份数和时间戳写入本地队列文件 `~/.mcd-pet/bubble.json`。
-5. 已启动的「麦麦」桌面宠物（`pet/麦麦-tk.py`，每 0.5 秒轮询该文件）读取消息并在头顶显示气泡。`fries >= 2` 时左右各出现一只分身并摇摆；气泡和动画会持续显示，点击桌宠后一起收起。若旧版手动消息没有 `fries` 字段，挂件会按文案中的“薯条”次数兼容判断。开机启动与自动保活由 `install/install_pet.command` 自动生成并注册 launchd 任务（`com.mcd.pet` 本体 + `com.mcd.pet.watchdog` 看门狗）；**优惠券巡检任务由 `install/install_coupon_reminder.command` 注册**（每小时），二者均在运行时按本机 `$HOME` 解析绝对路径，无需硬编码。
+1. 用户在 WorkBuddy 中提出点餐、热量、预算或优惠需求。
+2. `mcd-order-advisor` 按需求调用 `now-time-info`、`list-nutrition-foods`、`query-meals`、`query-store-coupons` 等 Tools 获取当轮数据。
+3. Skill 根据 MCP 返回结果组织建议；没有实时价格、门店或营养数据时，应说明未知，不编造结果。
+4. 用户要求桌宠播报时，Skill 调用 `skills/mcd-order-advisor/scripts/push_bubble.py`，把消息和结构化 `--fries N` 份数写入 `~/.mcd-pet/bubble.json`。
+5. `pet/麦麦-tk.py` 每 0.5 秒读取队列并显示气泡。`fries >= 2` 时播放分身动画；气泡和动画由用户点击桌宠关闭。旧消息没有 `fries` 字段时，源码会从文案中的“薯条”次数兼容判断。
 
-## 四、业务价值
+## 四、定时优惠券提醒流程
 
-把冰冷的菜单 / 营养 API 变成一个有温度的「陪伴型桌宠」：用户在桌面就能看到基于**实时官方数据**的个性化麦当劳推荐，而不是自己翻 App。MCP 提供真实数据底座，桌宠提供轻量、有趣的呈现层，二者通过本地队列文件解耦（宠物不直连网络，WorkBuddy / MCP 负责取数），既安全又好玩。
+1. 用户运行 `install/install_coupon_reminder.command`。脚本把 `coupon_alert.py` 安装到 WorkBuddy Skill 脚本目录，并按本机路径生成 `~/Library/LaunchAgents/com.mcd.pet.coupon.plist`。
+2. launchd 每小时运行一次 `coupon_alert.py`；`RunAtLoad` 也会在注册时触发一次。
+3. 脚本从本机 `~/.workbuddy/mcp.json` 读取 Token，直接调用 MCP `available-coupons`，根据返回的 `couponName`、`couponStatus` 和 `label` 判断可领状态。
+4. 首次运行只保存状态基线，不弹提醒。之后在新券出现或已有券状态转为可领取时提醒；同券有 6 小时冷却，23:00–08:00 静默，期间待提醒项目会延后处理。
+5. 提醒通过 `push_bubble.py` 写入桌宠队列，并发送 macOS 通知；桌宠未运行时还会尝试独立气泡兜底。脚本只提醒，不自动领取。
 
-## 数据边界
+状态保存在 `~/.mcd-pet/coupon_alert.json`，日志写入 `/tmp/mcdpet-coupon.log` 和 `/tmp/mcdpet-coupon.err.log`。可用 `coupon_alert.py --status` 查看状态，`--test` 测试本地提醒链路，`--force` 忽略首次静默和冷却并立即提醒当前可领券。
 
-- 实时对话推荐使用当轮查询的 MCP 结果；套餐详情优先查 `query-meal-detail`。单品营养数据不能自动代表套餐或个性化替换后的营养值。
-- 如需从 kJ 换算 kcal，使用 `kJ ÷ 4.184` 并标记为估算；数据缺失时说明未知，不补造数字。
-- 价格、优惠、菜单和供应状态必须对应本轮查询的门店与就餐方式。缺少实时价格时不得保证满足预算。
-- 定时提醒读取 `reminder_meals.json` 离线缓存，可能过期，不属于实时 MCP 推荐，不能据此声称在售或保证热量。
-- 营养值只作一般参考，不构成医疗或个体化营养建议。
+## 五、业务价值与数据边界
 
-## 五、代码位置
+WorkBuddy 把麦当劳 MCP 的当轮数据转成个性化建议；优惠券巡检脚本可以在对话之外发现新可领券；桌宠则提供轻量、可见的提醒方式。桌宠进程不访问网络，但 `coupon_alert.py` 会直接访问 MCP。
 
-- MCP 调用逻辑与提示词：`skills/mcd-order-advisor/SKILL.md`
-- 推送脚本：`skills/mcd-order-advisor/scripts/push_bubble.py`、`bubble_window.py`、`reminder.py`、`watchdog.py`
-- **新券提醒（直连 MCP 巡检）**：`skills/mcd-order-advisor/scripts/coupon_alert.py`；定时任务 `com.mcd.pet.coupon`（每 1 小时），由 `install/install_coupon_reminder.command` 一键注册（运行时生成本机 plist）
-- 展示层（桌宠）：`pet/麦麦-tk.py`（PySide6 浮空桌宠，轮询 `~/.mcd-pet/bubble.json`）
+- 菜单、营养、价格和券状态可能随时间、门店及就餐方式变化；推荐时以本轮 MCP 返回为准。
+- `reminder_meals.json` 是离线提醒缓存，不代表实时在售或当前营养数据。
+- 单品营养数据不能自动代表套餐或替换选项；套餐热量应优先查询 `query-meal-detail`。
+- 营养信息只作一般参考，不构成医疗或个体化营养建议。
+
+## 六、代码位置
+
+- MCP 对话调用规则：`skills/mcd-order-advisor/SKILL.md`
+- 优惠券定时巡检：`skills/mcd-order-advisor/scripts/coupon_alert.py`
+- 安装脚本：`install/install_coupon_reminder.command`
+- 桌宠消息推送：`skills/mcd-order-advisor/scripts/push_bubble.py`
+- 桌宠展示：`pet/麦麦-tk.py`

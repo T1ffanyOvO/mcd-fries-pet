@@ -105,7 +105,8 @@ A. 清爽低卡（≈520 kcal）
 用户**点一下麦麦才关闭**（不自动消失）。菜品用 `+` 连、末尾 `共X大卡`、热量单位用 kcal，控制在 22 字内。
 
 ```bash
-/Users/nina/.workbuddy/binaries/python/envs/default/bin/python \
+# 用 WorkBuddy 托管的 Python（路径因人而异，通常为 $HOME/.workbuddy/binaries/python/envs/default/bin/python）
+$HOME/.workbuddy/binaries/python/envs/default/bin/python \
   ~/.workbuddy/skills/mcd-order-advisor/scripts/push_bubble.py "<一句话>" [毫秒] [--fries N]
 ```
 
@@ -125,18 +126,17 @@ A. 清爽低卡（≈520 kcal）
 - 动画期间遮罩临时扩到分身区域，退场完成（0.35s）后自动收回（不长期占用点击穿透区）。
 - 点击收尾写在 `mouseReleaseEvent`：气泡可见时左键轻点 → `bubble.hide()` + `hide_ensemble()`。
 
-⚠️ 推送链路关键坑（2026-10-21 实测，别踩）：
-- 脚本**只写队列文件** `~/.mcd-pet/bubble.json`，由麦麦进程（每 0.5s 轮询）读取并绘制气泡。
-  **不要**用 `start_new_session`/Bash 后台去起独立窗口——macOS 上那种进程要么被回收、要么画不出 GUI，
-  用户啥也看不到（之前连跪 4 次的根因）。
-- 麦麦挂件本体用 `open "/Users/nina/Applications/麦麦挂件.app"` 启动（归系统管、常驻、GUI 会话），
-  **不要用 nohup/后台**，同样会被回收。
+⚠️ 推送行为与启动方式：
+- `push_bubble.py` 的主通道是写入 `~/.mcd-pet/bubble.json`，由已运行的麦麦进程轮询并绘制气泡。
+- 如果脚本没有检测到麦麦进程，会尝试启动独立气泡窗口作为兜底；该方式受 macOS 图形会话限制，不能保证显示。稳定播报应先启动桌宠。
+- 桌宠可通过 `pet/运行挂件.command` 手动启动；安装到 `~/Applications/麦麦挂件.app` 后，也可用 `open "$HOME/Applications/麦麦挂件.app"` 启动。避免从 AI 会话用后台子进程启动 GUI，以免进程被会话回收。
 
-### 5. 下单（谨慎）
+### 5. 下单与账户操作（谨慎）
 
-`create-order`、`draw-lottery`、`auto-bind-coupons`、`mall-create-order`
-**涉及真钱/真积分，必须拿到用户明确确认后再调**，且调用前复述一遍：门店、餐品、
-总价、优惠。用户没点头绝不执行。
+`create-order`、`mall-create-order`（下单，真钱）、`draw-lottery`（抽奖，真积分）、
+`auto-bind-coupons`（领券，把券加入麦麦省账户，**属账户状态变更、不涉及真钱**）
+**这些涉及真实账户/资金的操作，必须拿到用户明确确认后再调**，且调用前复述一遍：门店、餐品、
+总价、优惠（领券则复述券名）。用户没点头绝不执行。
 
 ### 6. 常点快捷方案（favorites.json）
 

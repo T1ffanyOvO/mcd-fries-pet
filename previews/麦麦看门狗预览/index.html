@@ -96,7 +96,7 @@
     <h2>⚙️ 真·看门狗脚本（约 40 行，已写好待激活）</h2>
     <pre># watchdog.py —— 每5s探活，挂了自动 open 拉起
 import os, time, json, subprocess
-APP = "/Users/nina/Applications/麦麦挂件.app"
+APP = os.path.expanduser("~/Applications/麦麦挂件.app")
 MARKER = "麦麦-tk.py"
 STATUS = os.path.expanduser("~/.mcd-pet/watchdog.json")
 
