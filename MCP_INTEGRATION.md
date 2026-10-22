@@ -29,7 +29,7 @@
 2. `mcd-order-advisor` skill 先调 `now-time-info` 判断时段，再调 `list-nutrition-foods` 与 `query-meals` 等拉取**实时**菜单与营养数据。
 3. skill 按热量目标 / 预算 / 忌口生成 2–3 套方案，并给出卡路里与营养账。
 4. 结论被压成菜品与热量分行显示的短文案，并通过 `push_bubble.py` 附带 `--fries N` 结构化薯条份数；脚本把文案、份数和时间戳写入本地队列文件 `~/.mcd-pet/bubble.json`。
-5. 已启动的「麦麦」桌面宠物（`pet/麦麦-tk.py`，每 0.5 秒轮询该文件）读取消息并在头顶显示气泡。`fries >= 2` 时左右各出现一只分身并摇摆；气泡和动画会持续显示，点击桌宠后一起收起。若旧版手动消息没有 `fries` 字段，挂件会按文案中的“薯条”次数兼容判断。开机启动与自动保活由用户配置的 launchd 任务负责；**优惠券巡检的 launchd plist 已随仓库提供**（`launchd/com.mcd.pet.coupon.plist`）。
+5. 已启动的「麦麦」桌面宠物（`pet/麦麦-tk.py`，每 0.5 秒轮询该文件）读取消息并在头顶显示气泡。`fries >= 2` 时左右各出现一只分身并摇摆；气泡和动画会持续显示，点击桌宠后一起收起。若旧版手动消息没有 `fries` 字段，挂件会按文案中的“薯条”次数兼容判断。开机启动与自动保活由 `install/install_pet.command` 自动生成并注册 launchd 任务（`com.mcd.pet` 本体 + `com.mcd.pet.watchdog` 看门狗）；**优惠券巡检任务由 `install/install_coupon_reminder.command` 注册**（每小时），二者均在运行时按本机 `$HOME` 解析绝对路径，无需硬编码。
 
 ## 四、业务价值
 
@@ -47,5 +47,5 @@
 
 - MCP 调用逻辑与提示词：`skills/mcd-order-advisor/SKILL.md`
 - 推送脚本：`skills/mcd-order-advisor/scripts/push_bubble.py`、`bubble_window.py`、`reminder.py`、`watchdog.py`
-- **新券提醒（直连 MCP 巡检）**：`skills/mcd-order-advisor/scripts/coupon_alert.py`；定时任务 `launchd/com.mcd.pet.coupon.plist`（每 1 小时），由 `启用优惠券提醒.command` 一键注册
+- **新券提醒（直连 MCP 巡检）**：`skills/mcd-order-advisor/scripts/coupon_alert.py`；定时任务 `com.mcd.pet.coupon`（每 1 小时），由 `install/install_coupon_reminder.command` 一键注册（运行时生成本机 plist）
 - 展示层（桌宠）：`pet/麦麦-tk.py`（PySide6 浮空桌宠，轮询 `~/.mcd-pet/bubble.json`）

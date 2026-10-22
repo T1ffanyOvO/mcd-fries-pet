@@ -174,7 +174,8 @@ A. 清爽低卡（≈520 kcal）
 - 推送仍复用 `push_bubble.py` → `~/.mcd-pet/bubble.json` → 桌宠绘制；
   桌宠没在跑时才退化成独立窗口 + macOS 通知。
 - 定时注册：**AI 会话里 `launchctl` 一定失败（EIO，拿不到 GUI session）**，
-  必须让用户在终端里跑 `启用优惠券提醒.command`（项目根目录，双击即可）。
+  必须让用户在终端里双击 `install/install_coupon_reminder.command`（仓库内，双击即可；
+  脚本会按本机 `$HOME` 生成本机绝对路径的 plist 并注册）。
 
 
 ```

@@ -9,7 +9,7 @@
 - 🤝 **真·麦当劳数据**：通过 `mcd-mcp` 拉取实时菜单、营养（约 160 个餐品）、门店、优惠与活动。
 - 💬 **气泡播报**：推荐结论由桌宠「麦麦」用头顶气泡说出来；菜品与热量分行显示，点击桌宠可关闭气泡。
 - 🍟 **分身合奏**：推荐中有 ≥2 份薯条时，桌宠左右各探出一只小麦麦并持续摇摆；点击桌宠会一并收起。
-- 🛡️ **看门狗脚本**：提供故障探测与重启脚本（`scripts/watchdog.py`，每 5s 探活、挂了自动拉起），仓库已附 `launchd/` 下的 `com.mcd.pet.watchdog.plist` 与 `com.mcd.pet.coupon.plist`，可 `launchctl load` 实现登录启动与持续保活。
+- 🛡️ **看门狗脚本**：提供故障探测与重启脚本（`scripts/watchdog.py`，每 5s 探活、挂了自动拉起）。开机启动与保活由 `install/` 下的安装脚本自动生成并注册 launchd 任务（`com.mcd.pet` 本体 + `com.mcd.pet.watchdog` 看门狗）。
 - 🥧 **多形态**：PySide6 浮空桌宠（Python）、macOS 原生悬浮挂件（Swift）、网页版虚拟宠物（HTML）。
 - 🎟️ **新券可领提醒**：`coupon_alert.py` 直连 mcd-mcp 定时巡检麦麦省，一旦发现券状态跳变成「可领取」，就推气泡 + macOS 通知。**只提醒，不自动领券**（自动领券属于真实消费行为，必须人工确认）。
 
@@ -44,6 +44,8 @@ python3 pet/麦麦-tk.py
 
 保持桌宠进程运行。也可双击 `pet/运行挂件.command`；若启动失败，请用上面的终端命令。
 
+**开机自启 + 崩溃保活（macOS）**：双击 `install/install_pet.command` 即可自动生成并注册 launchd 任务（本体 `com.mcd.pet` + 看门狗 `com.mcd.pet.watchdog`）。
+
 其它展示版本：
 - **网页版**：直接用浏览器打开 `pet/虚拟宠物-麦麦.html`
 - **macOS 原生**：运行 `sh 编译运行原生版.command`（需 Xcode Command Line Tools）
@@ -71,7 +73,7 @@ Skill 会根据请求查麦当劳 MCP，并调用 `push_bubble.py` 写入 `~/.mc
 
 ### 3.5 开启「新券可领」提醒（可选）
 
-双击仓库外的 `启用优惠券提醒.command`：把 `coupon_alert.py` 同步到技能目录、注册
+双击 `install/install_coupon_reminder.command`：把 `coupon_alert.py` 同步到技能目录、注册
 `com.mcd.pet.coupon` 定时任务（每 1 小时巡检），并立刻试跑一次。
 
 ```
@@ -110,8 +112,9 @@ mcd-fries-pet/
 │           ├── reminder.py       # 定时用餐提醒
 │           ├── reminder_meals.json
 │           └── coupon_alert.py   # 新券可领提醒（直连 MCP 巡检）
-├── launchd/
-│   └── com.mcd.pet.coupon.plist  # 优惠券巡检定时任务（1h）
+├── install/                     # macOS 一键安装脚本（双击运行，自动生成本机 launchd 任务）
+│   ├── install_pet.command       # 安装 / 重启 麦麦挂件 + 看门狗
+│   └── install_coupon_reminder.command  # 安装 优惠券每小时巡检
 ├── pet/                         # 桌宠展示层源码
 │   ├── 麦麦-tk.py
 │   ├── 麦麦.swift
