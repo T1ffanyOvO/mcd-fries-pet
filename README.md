@@ -1,16 +1,17 @@
-# 🍟 麦薯条 · 会聊麦当劳的桌面宠物（McDonald's MCP Desktop Pet）
+# 🍟 麦麦 · 会聊麦当劳的桌面宠物（McDonald's MCP Desktop Pet）
 
-一个基于**麦当劳官方 MCP（`mcd-mcp`）**的陪伴型桌面宠物。它不只是萌——当你在 WorkBuddy 里问「麦当劳吃什么」「帮我配一顿 600 大卡」，它会调用麦当劳**真实**菜单与营养数据，算出方案，再让桌面上那只开心薯条用气泡把推荐播报出来。
+一个基于**麦当劳官方 MCP（`mcd-mcp`）**的陪伴型桌面宠物。它不只是萌——当你在 WorkBuddy 里问「麦当劳吃什么」「帮我配一顿 600 大卡」，它会调用麦当劳**真实**菜单与营养数据，算出方案，再让桌面上那只开心麦麦用气泡把推荐播报出来。
 
 > 麦当劳程序员节创意开发大赛参赛作品 · 由参赛者独立开发，非麦当劳官方产品。
 
 ## ✨ 特性
 
 - 🤝 **真·麦当劳数据**：通过 `mcd-mcp` 拉取实时菜单、营养（约 160 个餐品）、门店、优惠与活动。
-- 💬 **气泡播报**：推荐结论由桌宠「麦薯条」用头顶气泡说出来（格式：`菜品+… 共X大卡`）。
-- 🍟 **分身合奏**：套餐含 ≥2 份薯条时，薯条左右各探出小薯条摇摆庆祝。
-- 🛡️ **看门狗脚本**：提供故障探测与重启脚本；当前仓库未附 launchd 安装配置，需用户自行配置后才可实现登录启动与持续保活。
+- 💬 **气泡播报**：推荐结论由桌宠「麦麦」用头顶气泡说出来；菜品与热量分行显示，点击桌宠可关闭气泡。
+- 🍟 **分身合奏**：推荐中有 ≥2 份薯条时，桌宠左右各探出一只小麦麦并持续摇摆；点击桌宠会一并收起。
+- 🛡️ **看门狗脚本**：提供故障探测与重启脚本（`scripts/watchdog.py`，每 5s 探活、挂了自动拉起），仓库已附 `launchd/` 下的 `com.mcd.pet.watchdog.plist` 与 `com.mcd.pet.coupon.plist`，可 `launchctl load` 实现登录启动与持续保活。
 - 🥧 **多形态**：PySide6 浮空桌宠（Python）、macOS 原生悬浮挂件（Swift）、网页版虚拟宠物（HTML）。
+- 🎟️ **新券可领提醒**：`coupon_alert.py` 直连 mcd-mcp 定时巡检麦麦省，一旦发现券状态跳变成「可领取」，就推气泡 + macOS 通知。**只提醒，不自动领券**（自动领券属于真实消费行为，必须人工确认）。
 
 ## 🧩 架构
 
@@ -18,9 +19,9 @@
 你 / WorkBuddy 对话
    → mcd-mcp（真实数据）
    → mcd-order-advisor skill（算方案）
-   → push_bubble.py
+   → push_bubble.py（附带薯条份数）
    → ~/.mcd-pet/bubble.json
-   → 麦薯条桌宠（每 0.5s 轮询 → 气泡）
+   → 麦麦桌宠（每 0.5s 轮询 → 气泡）
 ```
 
 ## 🚀 安装
@@ -38,7 +39,7 @@
 
 ```bash
 python3 -m pip install PySide6
-python3 pet/麦薯条-tk.py
+python3 pet/麦麦-tk.py
 ```
 
 保持桌宠进程运行。也可双击 `pet/运行挂件.command`；若启动失败，请用上面的终端命令。
@@ -53,11 +54,11 @@ python3 pet/麦薯条-tk.py
 2. 确认麦当劳 MCP 连接器已配置、启用，且 WorkBuddy 已加载 `mcd-mcp` 工具。首次配置需要 MCP Token；不要把 Token 写进仓库。
 3. 在 WorkBuddy 对话中直接说：
 
-   - “麦当劳帮我配一顿 600 大卡，推荐两套，并让桌面麦薯条播报。”
-   - “查一下我附近门店现在有什么优惠，给我推荐一份 50 元以内的晚餐，薯条说出来。”
+   - “麦当劳帮我配一顿 600 大卡，推荐两套，并让桌面麦麦播报。”
+   - “查一下我附近门店现在有什么优惠，给我推荐一份 50 元以内的晚餐，麦麦说出来。”
    - “我想吃麦当劳，低钠优先，帮我配餐并推送给桌面宠物。”
 
-Skill 会根据请求查麦当劳 MCP，并调用 `push_bubble.py` 写入 `~/.mcd-pet/bubble.json`；桌宠运行时会轮询该文件并显示气泡。只打开网页预览不会接收 Skill 消息。若 MCP 不可用，Skill 应明确告知，不应编造实时菜单、价格或营养数据。
+Skill 会根据请求查麦当劳 MCP，并调用 `push_bubble.py` 写入 `~/.mcd-pet/bubble.json`；桌宠每 0.5 秒轮询队列，按结构化 `fries` 份数决定是否播放分身动画。气泡会留在桌宠头顶，点击桌宠关闭；只打开网页预览不会接收 Skill 消息。若 MCP 不可用，Skill 应明确告知，不应编造实时菜单、价格或营养数据。
 
 ### 4. 推荐计算与数据边界
 
@@ -67,6 +68,23 @@ Skill 会根据请求查麦当劳 MCP，并调用 `push_bubble.py` 写入 `~/.mc
 - 预算推荐只在拿到对应门店当前价格/优惠时声称符合预算；缺少价格数据时先询问门店或说明无法核价。
 - 定时提醒使用 `scripts/reminder_meals.json` 中的离线缓存，不是实时 MCP 查询结果。其菜品、热量及可售状态可能过期；提醒内容应视为缓存灵感，不能据此下单。日常推荐应以本轮 MCP 查询为准。
 - MCP 营养信息仅供一般参考，不构成医疗或个体化营养建议；特殊饮食需求应优先遵从专业意见。
+
+### 3.5 开启「新券可领」提醒（可选）
+
+双击仓库外的 `启用优惠券提醒.command`：把 `coupon_alert.py` 同步到技能目录、注册
+`com.mcd.pet.coupon` 定时任务（每 1 小时巡检），并立刻试跑一次。
+
+```
+mcd-mcp（available-coupons，脚本直连，不依赖对话）
+   → coupon_alert.py（跳变判定 + 去重/冷却/静默时段）
+   → push_bubble.py → ~/.mcd-pet/bubble.json → 麦麦气泡
+   → 桌宠没在跑时兜底：独立气泡窗口 + macOS 通知
+```
+
+- 判定规则：**首次运行只记基线不打扰**；之后仅在「没见过 → 可领」或「不可领 → 可领」时提醒；同一张券 6 小时冷却；23:00–08:00 静默，积压到次日。
+- 状态文件 `~/.mcd-pet/coupon_alert.json`，日志 `/tmp/mcdpet-coupon.log`。
+- 手动调试：`coupon_alert.py --status`（只看不弹）/ `--test`（造假券验证链路）/ `--force`（强制弹一次）。
+- ⚠️ 定时任务必须在**终端**里注册：AI 会话内的 `launchctl` 拿不到 GUI session，一律返回 `Load failed: 5: Input/output error`。
 
 ## 🎯 目标用户
 
@@ -90,18 +108,21 @@ mcd-fries-pet/
 │           ├── bubble_window.py  # 兜底独立气泡
 │           ├── watchdog.py       # 看门狗保活
 │           ├── reminder.py       # 定时用餐提醒
-│           └── reminder_meals.json
+│           ├── reminder_meals.json
+│           └── coupon_alert.py   # 新券可领提醒（直连 MCP 巡检）
+├── launchd/
+│   └── com.mcd.pet.coupon.plist  # 优惠券巡检定时任务（1h）
 ├── pet/                         # 桌宠展示层源码
-│   ├── 麦薯条-tk.py
-│   ├── 麦薯条.swift
+│   ├── 麦麦-tk.py
+│   ├── 麦麦.swift
 │   ├── 虚拟宠物-麦麦.html
 │   ├── 运行挂件.command
 │   ├── 编译运行原生版.command
 │   ├── 诊断-窗口测试.py
 │   └── fries_mascot.png
 └── previews/
-    ├── 薯条动画预览/index.html
-    └── 薯条看门狗预览/index.html
+    ├── 麦麦动画预览/index.html
+    └── 麦麦看门狗预览/index.html
 ```
 
 ## ⚠️ 声明

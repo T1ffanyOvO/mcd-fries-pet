@@ -1,5 +1,5 @@
 #!/bin/bash
-# 双击启动「麦薯条」桌面挂件（PySide6 版）
+# 双击启动「麦麦」桌面挂件（PySide6 版）
 # 若仍被 macOS 拦截，请右键本文件 → 打开（第一次需这样放行一次）
 cd "$(dirname "$0")"
 
@@ -17,4 +17,4 @@ if ! "$PY" -c "import PySide6" 2>/dev/null; then
   exit 1
 fi
 
-"$PY" "麦薯条-tk.py"
+"$PY" "麦麦-tk.py"

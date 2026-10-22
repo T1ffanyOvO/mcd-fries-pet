@@ -1,6 +1,6 @@
 # MCP 集成说明（MCP_INTEGRATION.md）
 
-本项目**真实使用**麦当劳官方 MCP（`mcd-mcp`）能力，把实时菜单 / 营养 / 门店 / 优惠数据，通过桌面宠物「麦薯条」用气泡播报出来。
+本项目**真实使用**麦当劳官方 MCP（`mcd-mcp`）能力，把实时菜单 / 营养 / 门店 / 优惠数据，通过桌面宠物「麦麦」用气泡播报出来。
 
 ## 一、使用的麦当劳 MCP
 
@@ -28,8 +28,8 @@
 1. 用户在 WorkBuddy 对话中发起需求（如「麦当劳吃什么」「帮我配一顿 600 大卡」「这个套餐多少卡」）。
 2. `mcd-order-advisor` skill 先调 `now-time-info` 判断时段，再调 `list-nutrition-foods` 与 `query-meals` 等拉取**实时**菜单与营养数据。
 3. skill 按热量目标 / 预算 / 忌口生成 2–3 套方案，并给出卡路里与营养账。
-4. 结论被压成一句话（格式：`菜品1+菜品2+饮品\n共X大卡`，≤22 字），调用 `skills/mcd-order-advisor/scripts/push_bubble.py` 写入本地队列文件 `~/.mcd-pet/bubble.json`。
-5. 已启动的「麦薯条」桌面宠物（`pet/麦薯条-tk.py`，每 0.5s 轮询该文件）读取后，用气泡把本轮推荐播报出来；套餐含 ≥2 份薯条时触发分身合奏动画。当前仓库未提供 launchd plist，因此开机启动与自动保活需要用户自行配置。
+4. 结论被压成菜品与热量分行显示的短文案，并通过 `push_bubble.py` 附带 `--fries N` 结构化薯条份数；脚本把文案、份数和时间戳写入本地队列文件 `~/.mcd-pet/bubble.json`。
+5. 已启动的「麦麦」桌面宠物（`pet/麦麦-tk.py`，每 0.5 秒轮询该文件）读取消息并在头顶显示气泡。`fries >= 2` 时左右各出现一只分身并摇摆；气泡和动画会持续显示，点击桌宠后一起收起。若旧版手动消息没有 `fries` 字段，挂件会按文案中的“薯条”次数兼容判断。开机启动与自动保活由用户配置的 launchd 任务负责；**优惠券巡检的 launchd plist 已随仓库提供**（`launchd/com.mcd.pet.coupon.plist`）。
 
 ## 四、业务价值
 
@@ -47,4 +47,5 @@
 
 - MCP 调用逻辑与提示词：`skills/mcd-order-advisor/SKILL.md`
 - 推送脚本：`skills/mcd-order-advisor/scripts/push_bubble.py`、`bubble_window.py`、`reminder.py`、`watchdog.py`
-- 展示层（桌宠）：`pet/麦薯条-tk.py`（PySide6 浮空桌宠，轮询 `~/.mcd-pet/bubble.json`）
+- **新券提醒（直连 MCP 巡检）**：`skills/mcd-order-advisor/scripts/coupon_alert.py`；定时任务 `launchd/com.mcd.pet.coupon.plist`（每 1 小时），由 `启用优惠券提醒.command` 一键注册
+- 展示层（桌宠）：`pet/麦麦-tk.py`（PySide6 浮空桌宠，轮询 `~/.mcd-pet/bubble.json`）

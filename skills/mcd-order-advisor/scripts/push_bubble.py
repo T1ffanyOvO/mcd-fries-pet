@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""把一句话推到薯条气泡。
-主通道：写队列文件 ~/.mcd-pet/bubble.json，常驻的薯条挂件（open 启动、GUI 会话）会读它
+"""把一句话推到麦麦气泡。
+主通道：写队列文件 ~/.mcd-pet/bubble.json，常驻的麦麦挂件（open 启动、GUI 会话）会读它
 并在屏幕中上弹气泡。气泡由主挂件进程绘制，确保能显示且不被回收。
 兜底：主挂件没在跑时，用 start_new_session 弹独立窗口（仍可能受会话限制，但尽力）。
 用法：push_bubble.py "<文字>" [显示毫秒，默认20000] [--fries N]
@@ -15,7 +15,7 @@ import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 QUEUE = os.path.expanduser("~/.mcd-pet/bubble.json")
-PET_MARKER = "麦薯条-tk.py"
+PET_MARKER = "麦麦-tk.py"
 PY = sys.executable  # 用运行本脚本的解释器，避免写死本机路径
 BUBBLE_WIN = os.path.join(HERE, "bubble_window.py")
 

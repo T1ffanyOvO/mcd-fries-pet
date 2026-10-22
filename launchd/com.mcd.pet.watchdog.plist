@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.mcd.pet.watchdog</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/nina/.workbuddy/binaries/python/envs/default/bin/python</string>
+        <string>/Users/nina/.workbuddy/skills/mcd-order-advisor/scripts/watchdog.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardErrorPath</key>
+    <string>/tmp/mcdpet-watchdog.err.log</string>
+</dict>
+</plist>

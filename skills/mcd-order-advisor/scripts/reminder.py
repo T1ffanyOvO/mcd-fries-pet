@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """固定时间用餐提醒 + 自动推荐（12:00 午餐 / 18:00 晚餐）。
 由 launchd (com.mcd.pet.reminder.plist, StartCalendarInterval) 定时触发。
-薯条在跑 → 推气泡（贴薯条头，点一下消失）；没跑 → 退化为 macOS 通知。
+麦麦在跑 → 推气泡（贴麦麦头，点一下消失）；没跑 → 退化为 macOS 通知。
 推荐来自 reminder_meals.json（数值取自麦当劳官方营养库，离线缓存，避免触发时再连 MCP）。
 用法：reminder.py [lunch|dinner|now]   （now/无参按当前小时；lunch/dinner 用于手动演示）
 """
@@ -16,7 +16,7 @@ import datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEALS = os.path.join(HERE, "reminder_meals.json")
 QUEUE = os.path.expanduser("~/.mcd-pet/bubble.json")
-PET_MARKER = "麦薯条-tk.py"
+PET_MARKER = "麦麦-tk.py"
 PY = sys.executable  # 用运行本脚本的解释器，避免写死本机路径
 BUBBLE_WIN = os.path.join(HERE, "bubble_window.py")
 DISPLAY_MS = 60000  # 提醒停留 60s
@@ -41,7 +41,7 @@ def push(text, fries=0):
                        "ms": DISPLAY_MS, "fries": fries}, f, ensure_ascii=False)
     except Exception:
         pass
-    # 兜底：薯条没在跑，用独立窗口尽力弹（macOS 通知兜底在下方）
+    # 兜底：麦麦没在跑，用独立窗口尽力弹（macOS 通知兜底在下方）
     if not pet_running():
         try:
             subprocess.Popen([PY, BUBBLE_WIN, text, str(DISPLAY_MS)],

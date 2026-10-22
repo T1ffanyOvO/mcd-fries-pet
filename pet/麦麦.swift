@@ -1,6 +1,6 @@
 import Cocoa
 
-// 麦当劳薯条桌面挂件 —— 透明悬浮窗口，可拖动，带轻微摇摆待机动画
+// 麦当劳麦麦桌面挂件 —— 透明悬浮窗口，可拖动，带轻微摇摆待机动画
 // 仅含基础形态，交互功能后续按需添加
 
 class FriesView: NSView {
@@ -82,7 +82,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 右键菜单：退出
         let menu = NSMenu()
-        let quit = NSMenuItem(title: "退出麦薯条", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "退出麦麦", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.target = NSApp
         menu.addItem(quit)
         view.menu = menu

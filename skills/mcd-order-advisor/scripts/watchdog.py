@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""薯条挂件看门狗：每 5s 探活，挂了自动 open 拉起；状态写入 ~/.mcd-pet/watchdog.json。
+"""麦麦挂件看门狗：每 5s 探活，挂了自动 open 拉起；状态写入 ~/.mcd-pet/watchdog.json。
 由 launchd (com.mcd.pet.watchdog.plist, KeepAlive) 保活，Mac 重启后自动起。
 """
 import os
@@ -7,9 +7,25 @@ import time
 import json
 import subprocess
 
-# 薯条挂件 .app 路径：可用环境变量 MCD_PET_APP 覆盖，默认按文件名查找
-APP = os.environ.get("MCD_PET_APP", "麦薯条挂件.app")
-MARKER = "麦薯条-tk.py"
+# 麦麦挂件 .app 路径解析：优先环境变量 MCD_PET_APP，否则依次尝试标准安装位置。
+# 这样仓库 clone 到别的 Mac 也能自动找到 app，不必写死本机绝对路径。
+def resolve_app():
+    env = os.environ.get("MCD_PET_APP")
+    if env and os.path.exists(env):
+        return env
+    candidates = [
+        os.path.expanduser("~/Applications/麦麦挂件.app"),
+        "/Applications/麦麦挂件.app",
+        "麦麦挂件.app",  # 兜底：仅当 cwd 恰好在 app 所在目录时生效
+    ]
+    for c in candidates:
+        if c and os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.expanduser("~/Applications/麦麦挂件.app")  # 都没有则回退默认
+
+
+APP = resolve_app()
+MARKER = "麦麦-tk.py"
 STATUS = os.path.expanduser("~/.mcd-pet/watchdog.json")
 INTERVAL = 5
 
@@ -33,7 +49,7 @@ def start_pet():
 def notify(msg):
     try:
         subprocess.run(["osascript", "-e",
-                        f'display notification "{msg}" with title "麦当劳薯条挂件"'],
+                        f'display notification "{msg}" with title "麦当劳麦麦挂件"'],
                        check=False)
     except Exception:
         pass
@@ -58,7 +74,7 @@ def main():
             restarts += 1
             last_restart = time.time()
             start_pet()
-            notify("🍟 薯条已自动重启")
+            notify("🍟 麦麦已自动重启")
             write_status(False, restarts, last_restart)
         else:
             write_status(True, restarts, last_restart)
